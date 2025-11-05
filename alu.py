@@ -171,15 +171,34 @@ class Alu:
         """
         a &= WORD_MASK  # Keep this line as is
 
-        # Replace these two lines with a complete implementation
+    # On a left shift, the carry flag is set to the value of the last
+    #   bit shifted out. So, for example, in four bits, `0b1001 << 1`
+    #   would set the carry flag to 1. However, `0b1001 << 2` would set
+    #   the carry flag to 0, because the last bit shifted out was 0.
+    #   On a right shift, the carry flag is set to the value of the last
+    #   bit shifted out on the right. For example, `0b1001 >> 1` would
+    #   set carry flag to 1, and `0b1001 >> 2` would set carry flag to 0.
         if b > 0:
             # Left shift
             result = (a << b) & WORD_MASK
-            bit_out = (a >> (WORD_SIZE - b)) & 1
+            if 1 <= b <= WORD_SIZE:
+                bit_out = (a >> (WORD_SIZE - b)) & 1
+            else:
+                # shifting by >= WORD_SIZE shifts all original bits out
+                bit_out = 0
         elif b < 0:
             # Right shift
-            result = a >> (-b)
-            bit_out = (a >> (-b)) & 1
+            k = -b
+            if k >= WORD_SIZE:
+                # shifting by >= WORD_SIZE yields 0
+                result = 0
+                bit_out = 0
+            else:
+                result = (a >> k) & WORD_MASK
+                if 1 <= k <= WORD_SIZE:
+                    bit_out = (a >> (k - 1)) & 1
+                else:
+                    bit_out = 0
         else:
             # No shift
             result = a
