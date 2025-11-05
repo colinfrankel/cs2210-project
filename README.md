@@ -1,3 +1,6 @@
+### CS2210 Project
+## Colin Frankel & Alex Larsen
+
 For our final project we will build our own CPU simulator. Really.
 
 We’ll call our CPU the Catamount Processing Unit.
