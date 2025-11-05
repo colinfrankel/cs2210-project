@@ -70,13 +70,13 @@ class Alu:
             case 0b000:
                 self._op = "ADD"
             case 0b001:
-                pass  # replace pass with correct assignment
+                self._op = "SUB"
             case 0b010:
-                pass  # replace pass with correct assignment
+                self._op = "AND"
             case 0b011:
-                pass  # replace pass with correct assignment
+                self._op = "OR"
             case 0b100:
-                pass  # replace pass with correct assignment
+                self._op = "SHFT"
             case _:
                 raise ValueError("Invalid control signal")
         # Return value is for testing.
@@ -95,17 +95,17 @@ class Alu:
     @property
     def negative(self):
         # Return negative flag
-        return None  # replace this with correct return statement
+        return bool(self._flags & N_FLAG)
 
     @property
     def carry(self):
         # Return carry flag
-        return None  # replace this with correct return statement
+        return bool(self._flags & C_FLAG)
 
     @property
     def overflow(self):
         # Return overflow flag
-        return None  # replace this with correct return statement
+        return bool(self._flags & V_FLAG)
 
     def execute(self, a, b):
         """
@@ -134,19 +134,31 @@ class Alu:
         """
         SUB
         """
-        pass  # replace pass with correct implementation
+        a = a & WORD_MASK
+        b = b & WORD_MASK
+        result = (a - b) & WORD_MASK
+        self._update_arith_flags_sub(a, b, result)
+        return result
 
     def _and(self, a, b):
         """
         Bitwise AND
         """
-        pass  # replace pass with correct implementation
+        a = a & WORD_MASK
+        b = b & WORD_MASK
+        result = (a & b) & WORD_MASK
+        self._update_logic_flags(result)
+        return result
 
     def _or(self, a, b):
         """
         Bitwise OR
         """
-        pass  # replace pass with correct implementation
+        a = a & WORD_MASK
+        b = b & WORD_MASK
+        result = (a | b) & WORD_MASK
+        self._update_logic_flags(result)
+        return result
 
     def _shft(self, a, b):
         """
@@ -160,8 +172,18 @@ class Alu:
         a &= WORD_MASK  # Keep this line as is
 
         # Replace these two lines with a complete implementation
-        result = 0
-        bit_out = 0
+        if b > 0:
+            # Left shift
+            result = (a << b) & WORD_MASK
+            bit_out = (a >> (WORD_SIZE - b)) & 1
+        elif b < 0:
+            # Right shift
+            result = a >> (-b)
+            bit_out = (a >> (-b)) & 1
+        else:
+            # No shift
+            result = a
+            bit_out = 0
 
         # Keep these last two lines as they are
         self._update_shift_flags(result, bit_out)
@@ -178,7 +200,11 @@ class Alu:
         return x
 
     def _update_logic_flags(self, result):
-        pass  # replace pass with correct implementation
+        self._flags = 0
+        if result & (1 << (WORD_SIZE - 1)):
+            self._flags |= N_FLAG
+        if result == 0:
+            self._flags |= Z_FLAG
 
     def _update_arith_flags_add(self, a, b, result):
         """
@@ -198,7 +224,23 @@ class Alu:
             self._flags |= V_FLAG
 
     def _update_arith_flags_sub(self, a, b, result):
-        pass  # replace pass with correct implementation
+        if result & (1 << (WORD_SIZE - 1)):
+            self._flags |= N_FLAG
+        if result == 0:
+            self._flags |= Z_FLAG
+        if a >= b:
+            self._flags |= C_FLAG
+        sa, sb, sr = ((a >> (WORD_SIZE - 1)) & 1,
+                      (b >> (WORD_SIZE - 1)) & 1,
+                      (result >> (WORD_SIZE - 1)) & 1)
+        if sa != sb and sr != sa:
+            self._flags |= V_FLAG
 
     def _update_shift_flags(self, result, bit_out):
-        pass  # replace pass with correct implementation
+        self._flags = 0
+        if result & (1 << (WORD_SIZE - 1)):
+            self._flags |= N_FLAG
+        if result == 0:
+            self._flags |= Z_FLAG
+        if bit_out:
+            self._flags |= C_FLAG
