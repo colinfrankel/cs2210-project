@@ -180,25 +180,22 @@ class Alu:
     #   set carry flag to 1, and `0b1001 >> 2` would set carry flag to 0.
         if b > 0:
             # Left shift
-            result = (a << b) & WORD_MASK
-            if 1 <= b <= WORD_SIZE:
-                bit_out = (a >> (WORD_SIZE - b)) & 1
-            else:
-                # shifting by >= WORD_SIZE shifts all original bits out
+            shift = b & (WORD_SIZE - 1)
+            if shift == 0:
+                result = a
                 bit_out = 0
+            else:
+                result = (a << shift) & WORD_MASK
+                bit_out = (a >> (WORD_SIZE - shift)) & 1
         elif b < 0:
             # Right shift
-            k = -b
-            if k >= WORD_SIZE:
-                # shifting by >= WORD_SIZE yields 0
-                result = 0
+            shift = (-b) & (WORD_SIZE - 1)
+            if shift == 0:
+                result = a
                 bit_out = 0
             else:
-                result = (a >> k) & WORD_MASK
-                if 1 <= k <= WORD_SIZE:
-                    bit_out = (a >> (k - 1)) & 1
-                else:
-                    bit_out = 0
+                result = (a >> shift) & WORD_MASK
+                bit_out = (a >> (shift - 1)) & 1
         else:
             # No shift
             result = a
