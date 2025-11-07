@@ -171,37 +171,39 @@ class Alu:
         """
         a &= WORD_MASK  # Keep this line as is
 
-    # On a left shift, the carry flag is set to the value of the last
-    #   bit shifted out. So, for example, in four bits, `0b1001 << 1`
-    #   would set the carry flag to 1. However, `0b1001 << 2` would set
-    #   the carry flag to 0, because the last bit shifted out was 0.
-    #   On a right shift, the carry flag is set to the value of the last
-    #   bit shifted out on the right. For example, `0b1001 >> 1` would
-    #   set carry flag to 1, and `0b1001 >> 2` would set carry flag to 0.
-        if b > 0:
+    # We must interpret the shift amount `b` as a signed WORD_SIZE-bit
+    # value (two's complement) so direction (left/right) is determined
+    # correctly when b has the MSB set. Also, if the masked shift amount
+    # equals zero (e.g. shifting by a multiple of WORD_SIZE), the carry
+    # flag must be left unchanged.
+        # Interpret b as signed WORD_SIZE-bit value
+        b_signed = self._to_signed(b & WORD_MASK)
+
+        if b_signed > 0:
             # Left shift
-            shift = b & (WORD_SIZE - 1)
+            shift = b_signed & (WORD_SIZE - 1)
             if shift == 0:
                 result = a
-                bit_out = 0
+                bit_out = None  # None means "leave carry unchanged"
             else:
                 result = (a << shift) & WORD_MASK
                 bit_out = (a >> (WORD_SIZE - shift)) & 1
-        elif b < 0:
+        elif b_signed < 0:
             # Right shift
-            shift = (-b) & (WORD_SIZE - 1)
+            shift = (-b_signed) & (WORD_SIZE - 1)
             if shift == 0:
                 result = a
-                bit_out = 0
+                bit_out = None  # leave carry unchanged
             else:
                 result = (a >> shift) & WORD_MASK
                 bit_out = (a >> (shift - 1)) & 1
         else:
             # No shift
             result = a
-            bit_out = 0
+            bit_out = None  # leave carry unchanged
 
-        # Keep these last two lines as they are
+        # Update flags; if bit_out is None, _update_shift_flags will
+        # preserve the previous carry flag instead of clearing it.
         self._update_shift_flags(result, bit_out)
         return result
 
@@ -253,10 +255,21 @@ class Alu:
             self._flags |= V_FLAG
 
     def _update_shift_flags(self, result, bit_out):
+        # Preserve existing carry flag unless bit_out explicitly
+        # indicates the last bit shifted out (True/False). If
+        # bit_out is None, leave carry unchanged (per spec for
+        # shift-by-zero).
+        existing_carry = self._flags & C_FLAG
+
+        # Reset flags except carry (we'll reapply carry below)
         self._flags = 0
         if result & (1 << (WORD_SIZE - 1)):
             self._flags |= N_FLAG
         if result == 0:
             self._flags |= Z_FLAG
-        if bit_out:
+
+        if bit_out is None:
+            # Leave carry unchanged
+            self._flags |= existing_carry
+        elif bit_out:
             self._flags |= C_FLAG
