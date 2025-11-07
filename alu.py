@@ -176,12 +176,15 @@ class Alu:
     # correctly when b has the MSB set. Also, if the masked shift amount
     # equals zero (e.g. shifting by a multiple of WORD_SIZE), the carry
     # flag must be left unchanged.
-        # Interpret b as signed WORD_SIZE-bit value
-        b_signed = self._to_signed(b & WORD_MASK)
+        # Determine direction from signed value, but determine magnitude
+        # from the low bits of the unsigned representation. This makes
+        # e.g. 0x8001 (32769) be a RIGHT shift by 1 (low 4 bits = 1).
+        b_u = b & WORD_MASK
+        b_signed = self._to_signed(b_u)
+        shift = b_u & (WORD_SIZE - 1)
 
         if b_signed > 0:
             # Left shift
-            shift = b_signed & (WORD_SIZE - 1)
             if shift == 0:
                 result = a
                 bit_out = None  # None means "leave carry unchanged"
@@ -190,7 +193,6 @@ class Alu:
                 bit_out = (a >> (WORD_SIZE - shift)) & 1
         elif b_signed < 0:
             # Right shift
-            shift = (-b_signed) & (WORD_SIZE - 1)
             if shift == 0:
                 result = a
                 bit_out = None  # leave carry unchanged
