@@ -60,6 +60,9 @@ class RegisterFile:
         We cannot rely on Python's index out-of-bounds, because we don't want
         to permit negative indices (permitted by Python).
         """
+        # Make sure `idx` is in the desired range, otherwise raise an
+        # `IndexError` with message "Register index out of bounds!" This
+        # method needn't have an explicit return. Replace `pass` below.
         if not 0 <= idx < self.NUM_REGISTERS:
             raise IndexError("Register index out of bounds!")
 
@@ -80,6 +83,7 @@ class RegisterFile:
         value of `rb`).
 
         """
+
         self._check_index(ra)
         if rb is not None:
             self._check_index(rb)
@@ -104,10 +108,11 @@ class RegisterFile:
 
         Check bounds on `rd`.
         """
+
         if rd is None:
-            raise TypeError
+            raise TypeError("Cannot write; no destination specified!")
         if data is None:
-            raise TypeError
+            raise TypeError("Cannot write; no data!")
         self._check_index(rd)
         self.registers[rd].write(data)
 
