@@ -26,7 +26,7 @@ class Memory:
 
     def _check_addr(self, address):
         # Make sure address is positive, in the desired range,
-        if not 0 <= address < WORD_SIZE:
+        if not 0 <= address < max(WORD_SIZE, 1 << WORD_SIZE):
             raise ValueError
         # otherwise raise a `ValueError`. Replace `pass` below.
 
@@ -64,6 +64,7 @@ class Memory:
         # `True` on success. Replace `pass` below.
         self._write_enable = False
         return True
+
 
     def hexdump(self, start=0, stop=None, width=8):
         """
