@@ -12,37 +12,52 @@ from memory import DataMemory, InstructionMemory, Memory
 
 
 def test_write_out_of_range():
+    """
+    Ensures that trying to write outside of memory range results in a
+    `ValueError`.
+    """
     m = Memory()
     m.write_enable(True)
     with pytest.raises(ValueError):
         m.write(0x10000, 0xABCD)  # beyond 16-bit range
 
 
-def test_read_default_from_unwritten_cell():
+@pytest.mark.parametrize(
+    "addr,expected", [(0x0000, 0x0000), (0x1234, 0x0000), (0xFFFF, 0x0000)]
+)
+def test_read_default_from_unwritten_cell(addr, expected):
+    """
+    Ensures we get 0x0 (default) when reading uninitialized memory cell.
+    """
     m = Memory()
-    assert m.read(0x1234) == 0
+    assert m.read(addr) == expected
 
 
-def test_mem_write_when_enabled():
+@pytest.mark.parametrize(
+    "addr,val", [(0x0000, 0xABCD), (0x0001, 0x1234), (0x0002, 0x1111)]
+)
+def test_mem_write_when_enabled(addr, val):
+    """Ensure that when enabled we do indeed write."""
     m = Memory()
     m.write_enable(True)
-    m.write(0x0000, 0xABCD)
-    m.write_enable(True)
-    m.write(0x0001, 0x1234)
-    m.write_enable(True)
-    m.write(0x0002, 0x1111)
-    assert m.read(0) == 0xABCD
-    assert m.read(1) == 0x1234
-    assert m.read(2) == 0x1111
+    m.write(addr, val)
+    assert m.read(addr) == val
 
 
 def test_mem_write_when_disabled():
+    """
+    Ensures when we try to write without previously asserting write enable,
+    we get `RuntimeError`.
+    """
     m = Memory()
     with pytest.raises(RuntimeError):
         m.write(0, 0xABCD)
 
 
 def test_write_enable_clears_after_write():
+    """
+    Ensures that immediately after write, memory automatically disables write.
+    """
     m = Memory()
     m.write_enable(True)
     m.write(0x0000, 0xABCD)
@@ -71,6 +86,9 @@ def test_hexdump_multiple_lines_and_range():
 
 
 def test_load_program():
+    """
+    Ensures instructions properly loaded in instruction memory.
+    """
     p = [0x0DFF, 0xC002, 0xE000, 0x9206, 0x5288, 0xA003, 0xD000]
     im = InstructionMemory()
     im.load_program(p)
@@ -79,6 +97,9 @@ def test_load_program():
 
 
 def test_load_program_disables_write():
+    """
+    Ensures that instruction memory is locked down after load.
+    """
     im = InstructionMemory()
     im.load_program([0x1234])
     assert not im._write_enable
@@ -86,7 +107,8 @@ def test_load_program_disables_write():
 
 def test_instruction_memory_write_protected():
     """
-    Direct write should fail
+    Ensures that instruction memory is locked down after load, and a
+    `RuntimeError` is raised if we attempt write.
     """
     im = InstructionMemory()
     with pytest.raises(RuntimeError):
@@ -95,6 +117,9 @@ def test_instruction_memory_write_protected():
 
 
 def test_instruction_memory_load_program_allowed():
+    """
+    Ensure that we can write once to instruction memory via `.load_program()`.
+    """
     im = InstructionMemory()
     program = [0xAAAA, 0xBBBB]
     im.load_program(program)
@@ -108,6 +133,10 @@ def test_data_memory_blocks_nonstack_write():
     """
     dm = DataMemory()
     dm.write_enable(True)
+    # Note: If we include a `match` keyword argument and a string, then
+    # pytest will use string as a regular expression for matching the text
+    # of the error message. So it's not enough that a `RuntimeError` is raised.
+    # The `RuntimeError` must also include "stack region" in its message.
     with pytest.raises(RuntimeError, match="stack region"):
         dm.write(STACK_BASE, 0xABCD)
 
@@ -118,12 +147,11 @@ def test_data_memory_blocks_nonstack_write():
 
 def test_data_memory_allows_stack_write_when_flag_set():
     """
-    Verify that writes with from_stack=True succeed in stack region.
+    Ensure that writes with from_stack=True succeed in stack region.
     """
     dm = DataMemory()
     dm.write_enable(True)
     dm.write(STACK_BASE, 0xABCD, from_stack=True)
-
     # confirm value is stored
     assert dm.read(STACK_BASE) == 0xABCD
 
@@ -139,6 +167,9 @@ def test_data_memory_normal_region_writable():
 
 
 def test_memory_len_and_contains():
+    """
+    Ensure keys are added correctly in memory dictionary.
+    """
     m = Memory()
     assert len(m) == 0
     m.write_enable(True)

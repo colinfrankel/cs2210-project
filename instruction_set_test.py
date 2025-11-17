@@ -26,13 +26,15 @@ def test_opcode_map_is_inverse_of_isa():
         assert OPCODE_MAP[code] == mnem
 
 
+# Fixed test for STORE. 2025-11-11. Students need update.
 @pytest.mark.parametrize(
     "raw,mnem,expect",
     [
+        (0x0000, "LOADI", {"rd": 0x0, "imm": 0x0, "zero": 0x0}),
         (0x0DFE, "LOADI", {"rd": 0x6, "imm": 0xFF, "zero": 0x0}),
         (0x16DE, "LUI", {"rd": 0x3, "imm": 0x6F, "zero": 0x0}),
         (0x257F, "LOAD", {"rd": 0x2, "ra": 0x5, "addr": 0x3F, "zero": 0x0}),
-        (0x357F, "STORE", {"rd": 0x2, "ra": 0x5, "addr": 0x3F, "zero": 0x0}),
+        (0x357F, "STORE", {"ra": 0x2, "rb": 0x5, "addr": 0x3F, "zero": 0x0}),
         (0xA404, "BEQ", {"imm": 0x04, "zero": 0x0}),
         (0xB3FA, "BNE", {"imm": 0xFA, "zero": 0x0}),
         (0xC010, "B", {"imm": 0x10, "zero": 0x0}),

@@ -1,15 +1,17 @@
 """
 Tests for the Catamount Processing Unit (CPU) assembler.
+
 This uses PyTest, a unit testing framework for Python.
 PyTest is pip-installable.
+Run with: python -m pytest assembler_tests.py
 
 CS 2210 Computer Organization
 Clayton Cafiero <cbcafier@uvm.edu>
-
 """
 
 import pytest  # pip install pytest
-from assembler import _strip, _is_label, _reg, _imm, _mem_operand, assemble
+
+from assembler import _imm, _is_label, _mem_operand, _reg, _strip, assemble
 
 
 def test_strip():
@@ -144,98 +146,70 @@ def test_shft_encodes_correctly():
 
 
 def test_beq_encodes_with_forward_label():
-    src = [
-        "BEQ R1, TARGET",
-        "LOADI R0, #0",
-        "TARGET:",
-        "HALT"
-    ]
+    src = ["BEQ TARGET", "LOADI R0, #0", "TARGET:", "HALT"]
     prog = assemble(src)
     # Manually compute target address for testing.
     # opcode = 0xA (BEQ)
-    # ra = R1 -> 001b
     # offset = (TARGET - PC - 1) & 0xFF
-    expected = (0xA << 12) | (0x1 << 9) | (1 << 1)
+    expected = (0xA << 12) | 1
     assert prog[0] == expected  # check first instruction
 
 
 def test_beq_encodes_with_backward_label():
-    src = [
-        "LOOP:",
-        "LOADI R0, #0",
-        "BEQ R1, LOOP"
-    ]
+    src = ["LOOP:", "LOADI R0, #0", "BEQ LOOP"]
     prog = assemble(src)
     # Manually compute target address for testing.
     # labels['LOOP'] = 0
     # pc = 2 for BEQ
     # offset = (0 - 2 - 1) & 0xFF
     expected_offset = (0 - 1 - 1) & 0xFF
-    expected = (0xA << 12) | (0x1 << 9) | (expected_offset << 1)
+    expected = (0xA << 12) | expected_offset
     assert prog[1] == expected  # check second instruction
 
 
 def test_bne_encodes_with_forward_label():
-    src = [
-        "BNE R1, TARGET",
-        "LOADI R0, #0",
-        "TARGET:",
-        "HALT"
-    ]
+    src = ["BNE TARGET", "LOADI R0, #0", "TARGET:", "HALT"]
     prog = assemble(src)
     # Manually compute target address for testing.
     # opcode = 0xB (BNE)
-    # ra = R1 -> 001b
     # offset = (TARGET - PC - 1)
-    expected = (0xB << 12) | (0x1 << 9) | (1 << 1)
+    expected = (0xB << 12) | 1
     assert prog[0] == expected  # check first instruction
 
 
 def test_bne_encodes_with_backward_label():
-    src = [
-        "LOOP:",
-        "LOADI R0, #0",
-        "BNE R1, LOOP"
-    ]
+    src = ["LOOP:", "LOADI R0, #0", "BNE LOOP"]
     prog = assemble(src)
     # Manually compute target address for testing.
     # labels['LOOP'] = 0
     # pc = 2 for BNE
     # offset = (0 - 2 - 1) & 0xFF
     expected_offset = (0 - 1 - 1) & 0xFF
-    expected = (0xB << 12) | (0x1 << 9) | (expected_offset << 1)
+    expected = (0xB << 12) | expected_offset
     assert prog[1] == expected  # check second instruction
 
 
 def test_b_encodes_with_forward_label():
-    src = [
-        "B TARGET",
-        "TARGET:",
-        "HALT"
-    ]
+    src = ["B TARGET", "TARGET:", "HALT"]
     prog = assemble(src)
     # Manually compute target address for testing.
     # labels['TARGET'] = 1
     # pc = 0 for B
     # offset = (1 - 0 - 1) & 0xFF = 0
     expected_offset = 0
-    expected = (0xC << 12) | (expected_offset << 4)
+    expected = (0xC << 12) | expected_offset
     assert prog[0] == expected
 
 
 def test_b_encodes_with_backward_label():
-    src = [
-        "LOOP:",
-        "LOADI R0, #0",
-        "B LOOP"
-    ]
+    src = ["LOOP:", "LOADI R0, #0", "B LOOP"]
     prog = assemble(src)
     # Manually compute target address for testing.
     # labels['LOOP'] = 0
     # pc = 1 for B
     # offset = (TARGET - PC - 1)
     expected_offset = (0 - 1 - 1) & 0xFF
-    expected = (0xC << 12) | (expected_offset << 4)
+    expected = (0xC << 12) | expected_offset
     assert prog[1] == expected  # check first instruction
 
 
@@ -247,11 +221,11 @@ def test_call_encodes_correctly():
         "    CALL GCD",
         "    HALT",
         "GCD:",
-        "    BEQ R2, #0, DONE",
+        "    BEQ DONE",
         "    SUB R1, R1, R2",
-        "    BNE R1, #0, GCD",
+        "    BNE GCD",
         "DONE:",
-        "    RET"
+        "    RET",
     ]
     target_index = 3  # GCD:
     pc = 1  # CALL is second instruction
