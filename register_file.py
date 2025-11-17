@@ -29,16 +29,13 @@ class Register:
         self.value = 0
 
     def read(self):
-        # Just a getter for value. Replace `pass` below.
-        pass
+        return self.value
 
     def write(self, value):
-        # Registers themselves don't know about write enable. It's the register
-        # file that serves as gatekeeper in that regard. However, our registers
-        # should reject values that are too wide (too many bits). Use class
-        # constants here, and raise `ValueError` on bad value, otherwise set
-        # the value field. Replace `pass` below.
-        pass
+        if value < self.MIN_VALUE or value > self.MAX_VALUE:
+            raise ValueError("Value out of bounds!")
+        else:
+            self.value = value
 
     def __repr__(self):
         return f"{self.name}: {self.value:04X}"
@@ -53,21 +50,18 @@ class RegisterFile:
     NUM_REGISTERS = 8
 
     def __init__(self):
-        # When we instantiate our register file, we should instantiate eight
-        # register objects and include them in a list `self.registers`. Note:
-        # register objects should each get a unique name, R0, R1, R2, etc.
-        # apart from their index in the list. Replace `pass` below.
-        pass
+        self.registers = []
+        for i in range(self.NUM_REGISTERS):
+            reg_name = f"R{i}"
+            self.registers.append(Register(reg_name))
 
     def _check_index(self, idx):
         """
         We cannot rely on Python's index out-of-bounds, because we don't want
         to permit negative indices (permitted by Python).
         """
-        # Make sure `idx` is in the desired range, otherwise raise an
-        # `IndexError` with message "Register index out of bounds!" This
-        # method needn't have an explicit return. Replace `pass` below.
-        pass
+        if not 0 <= idx < self.NUM_REGISTERS:
+            raise IndexError("Register index out of bounds!")
 
     def _read(self, ra, rb):
         """
@@ -86,14 +80,10 @@ class RegisterFile:
         value of `rb`).
 
         """
-        # Make sure that we have correct operand(s) to select register(s) from
-        # which we'd like to read. Raise `TypeError` as needed. We have two
-        # "good" scenarios: `ra` provided but `rb` is `None`, or both `ra` and
-        # `rb` is specified. This method should call `_check_index()` as needed
-        # to ensure we have valid indices. It should *always* return a tuple,
-        # the first element of which is the value at `ra`, the second element
-        # of which is the value at `rb` or `None`. Replace `pass` below.
-        pass
+        self._check_index(ra)
+        if rb is not None:
+            self._check_index(rb)
+        return (self.registers[ra].read(), self.registers[rb].read() if rb is not None else None)
 
     def _write(self, rd, data):
         """This is called if `write_enable` is `True`. This is how we detect
@@ -114,14 +104,12 @@ class RegisterFile:
 
         Check bounds on `rd`.
         """
-        # This code should only be reachable from `execute()`. `execute()` will
-        # ensure that `write_enable` has been asserted. Accordingly, we need to
-        # ensure that both `rd` and `data` are supplied. If either is `none`,
-        # this method should raise a `TypeError`. If both are supplied, this
-        # method should call `_check_index()` to ensure index is good. If so,
-        # it should call `write()` on the appropriate register, as selected by
-        # `rd`. Replace `pass` below.
-        pass
+        if rd is None:
+            raise TypeError
+        if data is None:
+            raise TypeError
+        self._check_index(rd)
+        self.registers[rd].write(data)
 
     def execute(self, rd=None, ra=None, rb=None, data=None, write_enable=False):
         """
