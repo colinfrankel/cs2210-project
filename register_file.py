@@ -60,9 +60,6 @@ class RegisterFile:
         We cannot rely on Python's index out-of-bounds, because we don't want
         to permit negative indices (permitted by Python).
         """
-        # Make sure `idx` is in the desired range, otherwise raise an
-        # `IndexError` with message "Register index out of bounds!" This
-        # method needn't have an explicit return. Replace `pass` below.
         if not 0 <= idx < self.NUM_REGISTERS:
             raise IndexError("Register index out of bounds!")
 
