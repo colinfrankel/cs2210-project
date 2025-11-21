@@ -114,7 +114,8 @@ class Cpu:
                 case "BNE":
                     pass  # complete implementation here
                 case "B":
-                    pass  # complete implementation here
+                    offset = self.sext(self._decoded.imm, 8)
+                    self._pc += offset  # jump to target
                 case "CALL":
                     self._sp -= 1  # grow stack downward
                     # PC is incremented immediately upon fetch so already
@@ -127,11 +128,13 @@ class Cpu:
                     self._pc += self.sext(offset, 8)  # jump to target
                 case "RET":
                     # Get return address from memory via SP
+                    ret_addr = self._d_mem.read(self._sp)
                     # Increment SP
+                    self._sp += 1
                     # Update PC
-                    pass  # complete implementation here
+                    self._pc = ret_addr
                 case "HALT":
-                    pass  # complete implementation here
+                    self._halt = True
                 case _:  # default
                     raise ValueError(
                         "Unknown mnemonic: " + str(self._decoded) + "\n" + str(self._ir)

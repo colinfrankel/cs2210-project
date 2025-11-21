@@ -611,3 +611,80 @@ def test_branch_self_loop():
 
     # It should loop forever at PC = 0
     assert c.pc == 0
+
+
+def test_sub_logic():
+    prog = assemble(
+        [
+            "LOADI R5, #32",  # a
+            "LOADI R6, #16",  # b
+            "SUB R7, R5, R6",  # a - b
+            "HALT",
+        ]
+    )
+    c = make_cpu(prog)
+    c.tick()  # LOADI
+    c.tick()  # LOADI
+    c.tick()  # SUB
+    assert c.get_reg(7) == 16  # a - b = 16
+
+
+def test_lui_expected_behavior():
+    prog = assemble(["LOADI R3, #0", "LUI R3, #0x80"])
+    c = make_cpu(prog)
+    c.tick()  # LOADI
+    c.tick()  # LUI
+    assert c.get_reg(3) == 0x8000  # Confirm correct value
+
+
+def test_subtract_mutation_order():
+    prog = assemble(
+        [
+            "LOADI R5, #32",  # a = 32
+            "LOADI R6, #16",  # b = 16
+            "SUB R6, R6, R5",  # b = b - a => should be -16 (0xFFF0)
+            "HALT",
+        ]
+    )
+    c = make_cpu(prog)
+    c.tick()
+    c.tick()
+    c.tick()
+    assert c.get_reg(6) == -16
+
+
+def test_and_resets_negative_flag():
+    prog = assemble(
+        [
+            "LOADI R1, #0",
+            "LOADI R2, #0",
+            "SUB R3, R1, R2",  # zero result, flags: Z=1, N=0
+            "LOADI R1, #1",
+            "SUB R3, R2, R1",  # negative result, flags: N=1, Z=0
+            "AND R4, R2, R2",  # 0 & 0 → should set Z=1, N=0
+            "HALT",
+        ]
+    )
+    c = make_cpu(prog)
+    assert not c._alu.zero
+    assert not c._alu.negative
+    assert not c._alu.carry
+    assert not c._alu.overflow
+    c.tick()
+    c.tick()
+    c.tick()
+    assert c._alu.zero
+    assert not c._alu.negative
+    assert c._alu.carry
+    assert not c._alu.overflow
+    c.tick()
+    c.tick()
+    assert not c._alu.zero
+    assert c._alu.negative
+    assert not c._alu.carry
+    assert not c._alu.overflow
+    c.tick()
+    assert c._alu.zero
+    assert not c._alu.negative
+    assert not c._alu.carry
+    assert not c._alu.overflow
