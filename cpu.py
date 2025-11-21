@@ -95,7 +95,13 @@ class Cpu:
                     data = self._d_mem.read(addr)
                     self._regs.execute(rd=rd, data=data, write_enable=True) 
                 case "STORE":
-                    pass  # complete implementation here
+                    ra = self._decoded.ra
+                    rb = self._decoded.rb
+                    offset = self._decoded.imm
+                    addr, _ = self._regs.execute(ra=rb)[0] + offset
+                    data, _ = self._regs.execute(ra=ra)[0]
+                    self._d_mem.write_enable(True)
+                    self._d_mem.write(addr, data)
                 case "ADDI":
                     pass  # complete implementation here
                 case "ADD":
