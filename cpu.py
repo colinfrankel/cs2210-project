@@ -73,7 +73,9 @@ class Cpu:
             # execute...
             match self._decoded.mnem:
                 case "LOADI":
-                    pass  # complete implementation here
+                    rd = self._decoded.rd
+                    imm = self._decoded.imm
+                    self._regs.execute(rd=rd, data=imm, write_enable=True)
                 case "LUI":
                     # TODO Refactor for future semester(s) if any.
                     # Cheating for compatibility with released ALU tests
@@ -86,19 +88,48 @@ class Cpu:
                     data = upper | lower
                     self._regs.execute(rd=rd, data=data, write_enable=True)
                 case "LOAD":
-                    pass  # complete implementation here
+                    rd = self._decoded.rd
+                    ra = self._decoded.ra
+                    offset = self._decoded.imm
+                    addr, _ = self._regs.execute(ra=ra)[0] + offset
+                    data = self._d_mem.read(addr)
+                    self._regs.execute(rd=rd, data=data, write_enable=True) 
                 case "STORE":
                     pass  # complete implementation here
                 case "ADDI":
                     pass  # complete implementation here
                 case "ADD":
-                    pass  # complete implementation here
+                    self._alu.set_op("OR")
+                    rd = self._decoded.rd
+                    ra = self._decoded.ra
+                    rb = self._decoded.rb
+                    op_a, op_b = self._regs.execute(ra=ra, rb=rb)
+                    result = self._alu.execute(op_a, op_b)
+                    self._regs.execute(rd=rd, data=result, write_enable=True)
                 case "SUB":
-                    pass  # complete implementation here
+                    self._alu.set_op("SUB")
+                    rd = self._decoded.rd
+                    ra = self._decoded.ra
+                    rb = self._decoded.rb
+                    op_a, op_b = self._regs.execute(ra=ra, rb=rb)
+                    result = self._alu.execute(op_a, op_b)
+                    self._regs.execute(rd=rd, data=result, write_enable=True)
                 case "AND":
-                    pass  # complete implementation here
+                    self._alu.set_op("AND")
+                    rd = self._decoded.rd
+                    ra = self._decoded.ra
+                    rb = self._decoded.rb
+                    op_a, op_b = self._regs.execute(ra=ra, rb=rb)
+                    result = self._alu.execute(op_a, op_b)
+                    self._regs.execute(rd=rd, data=result, write_enable=True)
                 case "OR":
-                    pass  # complete implementation here
+                    self._alu.set_op("OR")
+                    rd = self._decoded.rd
+                    ra = self._decoded.ra
+                    rb = self._decoded.rb
+                    op_a, op_b = self._regs.execute(ra=ra, rb=rb)
+                    result = self._alu.execute(op_a, op_b)
+                    self._regs.execute(rd=rd, data=result, write_enable=True)
                 case "SHFT":
                     self._alu.set_op("SHFT")
                     rd = self._decoded.rd
