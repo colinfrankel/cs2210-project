@@ -4,6 +4,8 @@ A toy 16-bit Harvard architecture CPU.
 
 CS 2210 Computer Organization
 Clayton Cafiero <cbcafier@uvm.edu>
+
+STARTER CODE
 """
 
 from alu import Alu
@@ -52,9 +54,17 @@ class Cpu:
     def decoded(self):
         return self._decoded
 
+    def get_reg(self, r):
+        """
+        Public accessor (getter) for single register value.
+        Added 2025-11-15. Notify students.
+        """
+        return self._regs.execute(ra=r)[0]
+
     def tick(self):
         """
         Fetch-decode-execute
+        Implementation incomplete.
         """
         if not self._halt:
             self._fetch()
@@ -63,9 +73,7 @@ class Cpu:
             # execute...
             match self._decoded.mnem:
                 case "LOADI":
-                    rd = self._decoded.rd
-                    data = self.sext(self._decoded.imm)  # immediate
-                    self._regs.execute(rd=rd, data=data, write_enable=True)
+                    pass  # complete implementation here
                 case "LUI":
                     # TODO Refactor for future semester(s) if any.
                     # Cheating for compatibility with released ALU tests
@@ -78,61 +86,19 @@ class Cpu:
                     data = upper | lower
                     self._regs.execute(rd=rd, data=data, write_enable=True)
                 case "LOAD":
-                    base_addr, _ = self._regs.execute(ra=self._decoded.ra)
-                    offset = self.sext(self._decoded.addr)  # immediate
-                    eff_addr = base_addr + offset
-                    data = self._d_mem.read(eff_addr)
-                    self._regs.execute(
-                        rd=self._decoded.rd, data=data, write_enable=True
-                    )
+                    pass  # complete implementation here
                 case "STORE":
-                    data, base_addr = self._regs.execute(
-                        ra=self._decoded.ra, rb=self._decoded.rb
-                    )
-                    offset = self.sext(self._decoded.imm)
-                    eff_addr = base_addr + offset
-                    self._d_mem.write_enable(True)
-                    self._d_mem.write(eff_addr, data)
+                    pass  # complete implementation here
                 case "ADDI":
-                    self._alu.set_op("ADD")
-                    rd = self._decoded.rd
-                    ra = self._decoded.ra
-                    op_a, _ = self._regs.execute(ra=ra)
-                    op_b = self.sext(self._decoded.imm)  # immediate
-                    result = self._alu.execute(op_a, op_b)
-                    self._regs.execute(rd=rd, data=result, write_enable=True)
+                    pass  # complete implementation here
                 case "ADD":
-                    self._alu.set_op("ADD")
-                    rd = self._decoded.rd
-                    ra = self._decoded.ra
-                    rb = self._decoded.rb
-                    op_a, op_b = self._regs.execute(ra=ra, rb=rb)
-                    result = self._alu.execute(op_a, op_b)
-                    self._regs.execute(rd=rd, data=result, write_enable=True)
+                    pass  # complete implementation here
                 case "SUB":
-                    self._alu.set_op("SUB")
-                    rd = self._decoded.rd
-                    ra = self._decoded.ra
-                    rb = self._decoded.rb
-                    op_a, op_b = self._regs.execute(ra=ra, rb=rb)
-                    result = self._alu.execute(op_a, op_b)
-                    self._regs.execute(rd=rd, data=result, write_enable=True)
+                    pass  # complete implementation here
                 case "AND":
-                    self._alu.set_op("AND")
-                    rd = self._decoded.rd
-                    ra = self._decoded.ra
-                    rb = self._decoded.rb
-                    op_a, op_b = self._regs.execute(ra=ra, rb=rb)
-                    result = self._alu.execute(op_a, op_b)
-                    self._regs.execute(rd=rd, data=result, write_enable=True)
+                    pass  # complete implementation here
                 case "OR":
-                    self._alu.set_op("OR")
-                    rd = self._decoded.rd
-                    ra = self._decoded.ra
-                    rb = self._decoded.rb
-                    op_a, op_b = self._regs.execute(ra=ra, rb=rb)
-                    result = self._alu.execute(op_a, op_b)
-                    self._regs.execute(rd=rd, data=result, write_enable=True)
+                    pass  # complete implementation here
                 case "SHFT":
                     self._alu.set_op("SHFT")
                     rd = self._decoded.rd
@@ -146,12 +112,9 @@ class Cpu:
                         offset = self.sext(self._decoded.imm, 8)
                         self._pc += offset  # take branch
                 case "BNE":
-                    if not self._alu.zero:
-                        offset = self.sext(self._decoded.imm, 8)
-                        self._pc += offset  # take branch
+                    pass  # complete implementation here
                 case "B":
-                    offset = self.sext(self._decoded.imm, 8)
-                    self._pc += offset  # unconditional
+                    pass  # complete implementation here
                 case "CALL":
                     self._sp -= 1  # grow stack downward
                     # PC is incremented immediately upon fetch so already
@@ -161,13 +124,14 @@ class Cpu:
                     # push return address...
                     self._d_mem.write(self._sp, ret_addr, from_stack=True)
                     offset = self._decoded.imm
-                    self._pc += self.sext(offset)  # jump to target
+                    self._pc += self.sext(offset, 8)  # jump to target
                 case "RET":
-                    ret_addr = self._d_mem.read(self._sp)
-                    self._sp += 1
-                    self._pc = ret_addr
+                    # Get return address from memory via SP
+                    # Increment SP
+                    # Update PC
+                    pass  # complete implementation here
                 case "HALT":
-                    self._halt = True
+                    pass  # complete implementation here
                 case _:  # default
                     raise ValueError(
                         "Unknown mnemonic: " + str(self._decoded) + "\n" + str(self._ir)
@@ -183,19 +147,15 @@ class Cpu:
         self._decoded = Instruction(raw=self._ir)
 
     def _fetch(self):
-        raw_instruction = self._i_mem.read(self._pc)
-        self._ir = raw_instruction
-        self._pc += 1  # TODO refactor to let ALU handle this
+        pass  # complete implementation here
 
     def load_program(self, prog):
         self._i_mem.load_program(prog)
 
     @staticmethod
     def sext(value, bits=16):
-        mask = (1 << bits) - 1
-        value &= mask
         sign_bit = 1 << (bits - 1)
-        return (value ^ sign_bit) - sign_bit
+        return (value & (sign_bit - 1)) - (value & sign_bit)
 
 
 # Helper function
