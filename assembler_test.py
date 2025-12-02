@@ -215,15 +215,14 @@ def test_b_encodes_with_backward_label():
 
 def test_call_encodes_correctly():
     src = [
-        "; Euclid's GCD algorithm",
         "START:",
         "    LOADI R6, #0xFF",
-        "    CALL GCD",
+        "    CALL FOO",
         "    HALT",
-        "GCD:",
+        "FOO:",
         "    BEQ DONE",
         "    SUB R1, R1, R2",
-        "    BNE GCD",
+        "    BNE FOO",
         "DONE:",
         "    RET",
     ]
