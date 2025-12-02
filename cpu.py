@@ -88,18 +88,16 @@ class Cpu:
                     data = upper | lower
                     self._regs.execute(rd=rd, data=data, write_enable=True)
                 case "LOAD":
-                    rd = self._decoded.rd
-                    ra = self._decoded.ra
-                    offset = self._decoded.imm
-                    addr, _ = self._regs.execute(ra=ra)[0] + offset
-                    data = self._d_mem.read(addr)
-                    self._regs.execute(rd=rd, data=data, write_enable=True) 
+                    base, _ = self._regs.execute(ra=self._decoded.ra)
+                    offset = self.sext(self._decoded.addr)
+                    data = self._d_mem.read(base + offset)
+                    self._regs.execute(rd=self._decoded.rd, data=data, write_enable=True)
                 case "STORE":
                     ra = self._decoded.ra
                     rb = self._decoded.rb
-                    offset = self._decoded.imm
-                    addr, _ = self._regs.execute(ra=rb)[0] + offset
-                    data, _ = self._regs.execute(ra=ra)[0]
+                    data, base = self._regs.execute(ra=ra, rb=rb)
+                    offset = self.sext(self._decoded.imm)
+                    addr = base + offset
                     self._d_mem.write_enable(True)
                     self._d_mem.write(addr, data)
                 case "ADDI":
@@ -111,7 +109,7 @@ class Cpu:
                    result = self._alu.execute(op_a, op_b)
                    self._regs.execute(rd=rd, data=result, write_enable=True)
                 case "ADD":
-                    self._alu.set_op("OR")
+                    self._alu.set_op("ADD")
                     rd = self._decoded.rd
                     ra = self._decoded.ra
                     rb = self._decoded.rb
