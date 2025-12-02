@@ -103,7 +103,13 @@ class Cpu:
                     self._d_mem.write_enable(True)
                     self._d_mem.write(addr, data)
                 case "ADDI":
-                    pass  # complete implementation here
+                   self._alu.set_op("ADD")
+                   rd = self._decoded.rd
+                   ra = self._decoded.ra
+                   op_a, _ = self._regs.execute(ra=ra)
+                   op_b = self.sext(self._decoded.imm)  # immediate
+                   result = self._alu.execute(op_a, op_b)
+                   self._regs.execute(rd=rd, data=result, write_enable=True)
                 case "ADD":
                     self._alu.set_op("OR")
                     rd = self._decoded.rd
@@ -149,7 +155,9 @@ class Cpu:
                         offset = self.sext(self._decoded.imm, 8)
                         self._pc += offset  # take branch
                 case "BNE":
-                    pass  # complete implementation here
+                    if not self._alu.zero:
+                        offset = self.sext(self._decoded.imm, 8)
+                        self._pc += offset 
                 case "B":
                     offset = self.sext(self._decoded.imm, 8)
                     self._pc += offset  # jump to target
@@ -187,7 +195,8 @@ class Cpu:
         self._decoded = Instruction(raw=self._ir)
 
     def _fetch(self):
-        pass  # complete implementation here
+        self._ir = self._i_mem.read(self._pc)
+        self._pc += 1
 
     def load_program(self, prog):
         self._i_mem.load_program(prog)
